@@ -131,6 +131,11 @@ type Routes interface {
 	// Find searches the routing tree for the pattern that matches
 	// the method/path.
 	Find(rctx *Context, method, path string) string
+
+	// FindHandler searches the routing tree for a handler that matches
+	// the method/path - similar to routing a http request, but returns
+	// the handler instead of executing it.
+	FindHandler(rctx *Context, method, path string) http.Handler
 }
 
 // Middlewares type is a slice of standard middleware handlers with methods

@@ -399,6 +399,33 @@ func (mx *Mux) Find(rctx *Context, method, path string) string {
 	return pattern
 }
 
+// FindHandler searches the routing tree for a handler that matches the method/path.
+// It's similar to routing a http request, but returns the handler instead of
+// executing it.
+//
+// Note: the *Context state is updated during execution, so manage
+// the state carefully or make a NewRouteContext().
+func (mx *Mux) FindHandler(rctx *Context, method, path string) http.Handler {
+	m, ok := methodMap[method]
+	if !ok {
+		return nil
+	}
+
+	node, _, h := mx.tree.FindRoute(rctx, m, path)
+
+	if node != nil && node.subroutes != nil {
+		rctx.RoutePath = mx.nextRoutePath(rctx)
+		return node.subroutes.FindHandler(rctx, method, rctx.RoutePath)
+	}
+
+	switch v := h.(type) {
+	case *ChainHandler:
+		return v.Endpoint
+	default:
+		return h
+	}
+}
+
 // NotFoundHandler returns the default Mux 404 responder whenever a route
 // cannot be found.
 func (mx *Mux) NotFoundHandler() http.HandlerFunc {
